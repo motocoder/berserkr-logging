@@ -12,7 +12,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Test class to verify configuration parameters of SimpleLogger
+ * Test class to verify configuration parameters of berserkrLogger
  *
  * @since 2.0.18
  */
@@ -39,7 +39,7 @@ public class ConfigParamsTest {
     }
 
     @Test
-    public void simpleTest(){
+    public void berserkrTest(){
         String WARN_LEVEL_STRING = "WXYZ";
         ArrayList<String> outputList = new ArrayList<>();
         Logger configuredLogger = createLogger(prepareSink(outputList), Level.TRACE,  WARN_LEVEL_STRING);

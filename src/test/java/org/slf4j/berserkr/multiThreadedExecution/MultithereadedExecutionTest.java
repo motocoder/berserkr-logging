@@ -52,14 +52,14 @@ public class MultithereadedExecutionTest {
     @BeforeEach
     public void setup() {
         System.setErr(scps);
-        // System.setProperty(SimpleLogger.LOG_FILE_KEY, "System.err");
+        // System.setProperty(berserkrLogger.LOG_FILE_KEY, "System.err");
         // LoggerFactoryFriend.reset();
     }
 
     @AfterEach
     public void tearDown() throws Exception {
         // LoggerFactoryFriend.reset();
-        // System.clearProperty(SimpleLogger.LOG_FILE_KEY);
+        // System.clearProperty(berserkrLogger.LOG_FILE_KEY);
         System.setErr(oldOut);
     }
 

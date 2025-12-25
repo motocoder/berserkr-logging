@@ -53,14 +53,14 @@ public class BerserkrLogger extends LegacyAbstractLogger {
 
     /** The current log level */
     protected int currentLogLevel = LOG_LEVEL_INFO;
-    /** The short name of this simple log instance */
+    /** The short name of this berserkr log instance */
     private transient String shortLogName = null;
 
     /**
-     * All system properties used by <code>SimpleLogger</code> start with this
+     * All system properties used by <code>berserkrLogger</code> start with this
      * prefix
      */
-    public static final String SYSTEM_PREFIX = "org.slf4j.simpleLogger.";
+    public static final String SYSTEM_PREFIX = "org.slf4j.berserkrLogger.";
 
     public static final String LOG_KEY_PREFIX = BerserkrLogger.SYSTEM_PREFIX + "log.";
 
@@ -185,7 +185,7 @@ public class BerserkrLogger extends LegacyAbstractLogger {
      * @return whether the logger is enabled for the given level
      */
     protected boolean isLevelEnabled(int logLevel) {
-        // log level are numerically ordered so can use simple numeric
+        // log level are numerically ordered so can use berserkr numeric
         // comparison
         return (logLevel >= currentLogLevel);
     }
@@ -216,7 +216,7 @@ public class BerserkrLogger extends LegacyAbstractLogger {
     }
 
     /**
-     * SimpleLogger's implementation of
+     * berserkrLogger's implementation of
      * {@link org.slf4j.helpers.AbstractLogger#handleNormalizedLoggingCall(Level, Marker, String, Object[], Throwable) AbstractLogger#handleNormalizedLoggingCall}
      * }
      *

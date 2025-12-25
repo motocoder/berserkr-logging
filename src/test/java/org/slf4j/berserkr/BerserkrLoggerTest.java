@@ -57,52 +57,52 @@ public class BerserkrLoggerTest {
 
     @Test
     public void emptyLoggerName() {
-        BerserkrLogger simpleLogger = new BerserkrLogger("a");
-        assertEquals("info", simpleLogger.recursivelyComputeLevelString());
+        BerserkrLogger berserkrLogger = new BerserkrLogger("a");
+        assertEquals("info", berserkrLogger.recursivelyComputeLevelString());
     }
 
     @Test
     public void offLevel() {
         System.setProperty(A_KEY, "off");
         BerserkrLogger.init();
-        BerserkrLogger simpleLogger = new BerserkrLogger("a");
-        assertEquals("off", simpleLogger.recursivelyComputeLevelString());
-        assertFalse(simpleLogger.isErrorEnabled());
+        BerserkrLogger berserkrLogger = new BerserkrLogger("a");
+        assertEquals("off", berserkrLogger.recursivelyComputeLevelString());
+        assertFalse(berserkrLogger.isErrorEnabled());
     }
 
     @Test
     public void loggerNameWithNoDots_WithLevel() {
         BerserkrLogger.init();
-        BerserkrLogger simpleLogger = new BerserkrLogger("a");
+        BerserkrLogger berserkrLogger = new BerserkrLogger("a");
 
-        assertEquals("info", simpleLogger.recursivelyComputeLevelString());
+        assertEquals("info", berserkrLogger.recursivelyComputeLevelString());
     }
 
     @Test
     public void loggerNameWithOneDotShouldInheritFromParent() {
-        BerserkrLogger simpleLogger = new BerserkrLogger("a.b");
-        assertEquals("info", simpleLogger.recursivelyComputeLevelString());
+        BerserkrLogger berserkrLogger = new BerserkrLogger("a.b");
+        assertEquals("info", berserkrLogger.recursivelyComputeLevelString());
     }
 
     @Test
     public void loggerNameWithNoDots_WithNoSetLevel() {
-        BerserkrLogger simpleLogger = new BerserkrLogger("x");
-        assertNull(simpleLogger.recursivelyComputeLevelString());
+        BerserkrLogger berserkrLogger = new BerserkrLogger("x");
+        assertNull(berserkrLogger.recursivelyComputeLevelString());
     }
 
     @Test
     public void loggerNameWithOneDot_NoSetLevel() {
-        BerserkrLogger simpleLogger = new BerserkrLogger("x.y");
-        assertNull(simpleLogger.recursivelyComputeLevelString());
+        BerserkrLogger berserkrLogger = new BerserkrLogger("x.y");
+        assertNull(berserkrLogger.recursivelyComputeLevelString());
     }
 
     @Test
     public void checkUseOfLastSystemStreamReference() {
         BerserkrLogger.init();
-        BerserkrLogger simpleLogger = new BerserkrLogger(this.getClass().getName());
+        BerserkrLogger berserkrLogger = new BerserkrLogger(this.getClass().getName());
 
         System.setErr(replacement);
-        simpleLogger.info("hello");
+        berserkrLogger.info("hello");
         replacement.flush();
         assertTrue(bout.toString().contains("INFO " + this.getClass().getName() + " - hello"));
     }
@@ -112,11 +112,11 @@ public class BerserkrLoggerTest {
         System.setErr(replacement);
         System.setProperty(BerserkrLogger.CACHE_OUTPUT_STREAM_STRING_KEY, "true");
         BerserkrLogger.init();
-        BerserkrLogger simpleLogger = new BerserkrLogger(this.getClass().getName());
+        BerserkrLogger berserkrLogger = new BerserkrLogger(this.getClass().getName());
         // change reference to original before logging
         System.setErr(original);
 
-        simpleLogger.info("hello");
+        berserkrLogger.info("hello");
         replacement.flush();
         assertTrue(bout.toString().contains("INFO " + this.getClass().getName() + " - hello"));
     }
@@ -138,8 +138,8 @@ public class BerserkrLoggerTest {
         System.setErr(replacement);
         System.setProperty(BerserkrLogger.SHOW_THREAD_ID_KEY, Boolean.TRUE.toString());
         BerserkrLogger.init();
-        BerserkrLogger simpleLogger = new BerserkrLogger(this.getClass().getName());
-        simpleLogger.info("hello");
+        BerserkrLogger berserkrLogger = new BerserkrLogger(this.getClass().getName());
+        berserkrLogger.info("hello");
         replacement.flush();
         String output = bout.toString();
         System.out.println(patternStr);

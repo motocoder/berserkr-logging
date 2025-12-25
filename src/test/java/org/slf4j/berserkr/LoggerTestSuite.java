@@ -23,20 +23,20 @@ public abstract class LoggerTestSuite {
         Logger configuredLogger = createLogger(prepareSink(outputList), Level.TRACE);
 
         assertTrue(configuredLogger.isTraceEnabled());
-        configuredLogger.trace("Simple trace message");
+        configuredLogger.trace("berserkr trace message");
 
         assertEquals( 1, outputList.size());
         assertTrue( isTraceMessage(outputList.get(0)));
         assertEquals(
-                     "Simple trace message",
+                     "berserkr trace message",
                      extractMessage(outputList.get(0)));
 
         outputList.clear();
 
-        configuredLogger.debug("Simple debug message");
-        configuredLogger.info("Simple info message");
-        configuredLogger.warn("Simple warn message");
-        configuredLogger.error("Simple error message");
+        configuredLogger.debug("berserkr debug message");
+        configuredLogger.info("berserkr info message");
+        configuredLogger.warn("berserkr warn message");
+        configuredLogger.error("berserkr error message");
         assertEquals( 4, outputList.size());
 
     }
@@ -46,23 +46,23 @@ public abstract class LoggerTestSuite {
         ArrayList<String> outputList = new ArrayList<>();
         Logger configuredLogger = createLogger(prepareSink(outputList), Level.DEBUG);
 
-        configuredLogger.trace("Simple trace message");
+        configuredLogger.trace("berserkr trace message");
         assertEquals(0, outputList.size());
 
         assertTrue( configuredLogger.isDebugEnabled());
-        configuredLogger.debug("Simple debug message");
+        configuredLogger.debug("berserkr debug message");
 
         assertEquals(1, outputList.size());
         assertTrue( isDebugMessage(outputList.get(0)));
         assertEquals(
-                     "Simple debug message",
+                     "berserkr debug message",
                      extractMessage(outputList.get(0)));
 
         outputList.clear();
 
-        configuredLogger.info("Simple info message");
-        configuredLogger.warn("Simple warn message");
-        configuredLogger.error("Simple error message");
+        configuredLogger.info("berserkr info message");
+        configuredLogger.warn("berserkr warn message");
+        configuredLogger.error("berserkr error message");
         assertEquals( 3, outputList.size());
     }
 
@@ -72,23 +72,23 @@ public abstract class LoggerTestSuite {
         ArrayList<String> outputList = new ArrayList<>();
         Logger configuredLogger = createLogger(prepareSink(outputList), Level.INFO);
 
-        configuredLogger.trace("Simple trace message");
-        configuredLogger.debug("Simple debug message");
+        configuredLogger.trace("berserkr trace message");
+        configuredLogger.debug("berserkr debug message");
         assertEquals(0, outputList.size());
 
         assertTrue( configuredLogger.isInfoEnabled());
-        configuredLogger.info("Simple info message");
+        configuredLogger.info("berserkr info message");
 
         assertEquals( 1, outputList.size());
         assertTrue(isInfoMessage(outputList.get(0)));
         assertEquals(
-                     "Simple info message",
+                     "berserkr info message",
                      extractMessage(outputList.get(0)));
 
         outputList.clear();
 
-        configuredLogger.warn("Simple warn message");
-        configuredLogger.error("Simple error message");
+        configuredLogger.warn("berserkr warn message");
+        configuredLogger.error("berserkr error message");
         assertEquals(2, outputList.size());
     }
 
@@ -97,23 +97,23 @@ public abstract class LoggerTestSuite {
         ArrayList<String> outputList = new ArrayList<>();
         Logger configuredLogger = createLogger(prepareSink(outputList), Level.WARN);
 
-        configuredLogger.trace("Simple trace message");
-        configuredLogger.debug("Simple debug message");
-        configuredLogger.info("Simple info message");
+        configuredLogger.trace("berserkr trace message");
+        configuredLogger.debug("berserkr debug message");
+        configuredLogger.info("berserkr info message");
         assertEquals(0, outputList.size());
 
         assertTrue( configuredLogger.isWarnEnabled());
-        configuredLogger.warn("Simple warn message");
+        configuredLogger.warn("berserkr warn message");
 
         assertEquals( 1, outputList.size());
         assertTrue( isWarnMessage(outputList.get(0)));
         assertEquals(
-                     "Simple warn message",
+                     "berserkr warn message",
                      extractMessage(outputList.get(0)));
 
         outputList.clear();
 
-        configuredLogger.error("Simple error message");
+        configuredLogger.error("berserkr error message");
         assertEquals( 1, outputList.size());
     }
 
@@ -122,19 +122,19 @@ public abstract class LoggerTestSuite {
         ArrayList<String> outputList = new ArrayList<>();
         Logger configuredLogger = createLogger(prepareSink(outputList), Level.ERROR);
 
-        configuredLogger.trace("Simple trace message");
-        configuredLogger.debug("Simple debug message");
-        configuredLogger.info("Simple info message");
-        configuredLogger.warn("Simple warn message");
+        configuredLogger.trace("berserkr trace message");
+        configuredLogger.debug("berserkr debug message");
+        configuredLogger.info("berserkr info message");
+        configuredLogger.warn("berserkr warn message");
         assertEquals( 0, outputList.size());
 
         assertTrue( configuredLogger.isErrorEnabled());
-        configuredLogger.error("Simple error message");
+        configuredLogger.error("berserkr error message");
 
         assertEquals( 1, outputList.size());
         assertTrue( isErrorMessage(outputList.get(0)));
         assertEquals(
-                     "Simple error message",
+                     "berserkr error message",
                      extractMessage(outputList.get(0)));
     }
 

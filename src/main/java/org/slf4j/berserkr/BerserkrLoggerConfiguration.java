@@ -89,7 +89,7 @@ public class BerserkrLoggerConfiguration {
     }
 
     private void loadProperties() {
-        // Add props from the resource simplelogger.properties
+        // Add props from the resource berserkrlogger.properties
         InputStream in = AccessController.doPrivileged((PrivilegedAction<InputStream>) () -> {
             ClassLoader threadCL = Thread.currentThread().getContextClassLoader();
             if (threadCL != null) {
