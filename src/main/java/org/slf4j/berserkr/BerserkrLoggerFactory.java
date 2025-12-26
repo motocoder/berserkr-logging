@@ -2,10 +2,8 @@ package org.slf4j.berserkr;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
-import org.slf4j.helpers.Reporter;
 
 public class BerserkrLoggerFactory implements ILoggerFactory {
 

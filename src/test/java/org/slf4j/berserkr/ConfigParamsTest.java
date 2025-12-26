@@ -29,7 +29,6 @@ public class ConfigParamsTest {
     }
 
     public Logger createLogger(ListAppendingOutputStream outputStream, Level level, String warnLevelString) {
-        BerserkrLogger.CONFIG_PARAMS.outputChoice = new OutputChoice(new PrintStream(outputStream));
 
         BerserkrLogger.CONFIG_PARAMS.warnLevelString = warnLevelString;
 

@@ -23,7 +23,6 @@ public class BerserkrLoggerConfiguration {
     boolean showDateTime = SHOW_DATE_TIME_DEFAULT;
 
     private static final String DATE_TIME_FORMAT_STR_DEFAULT = null;
-    private static String dateTimeFormatStr = DATE_TIME_FORMAT_STR_DEFAULT;
 
     DateFormat dateFormatter = null;
 
@@ -56,6 +55,15 @@ public class BerserkrLoggerConfiguration {
     private static final String WARN_LEVELS_STRING_DEFAULT = "WARN";
     String warnLevelString = WARN_LEVELS_STRING_DEFAULT;
 
+    private static final String PASSWORD_STRING_DEFAULT = "password";
+    String passwordString = PASSWORD_STRING_DEFAULT;
+
+    private static final String GUID_STRING_DEFAULT = "berserkr";
+    String guidString = GUID_STRING_DEFAULT;
+
+    private static final String TAG_STRING_DEFAULT = "undefined-tag";
+    String tagString = TAG_STRING_DEFAULT;
+
     private final Properties properties = new Properties();
 
     void init() {
@@ -70,9 +78,12 @@ public class BerserkrLoggerConfiguration {
         showDateTime = getBooleanProperty(BerserkrLogger.SHOW_DATE_TIME_KEY, SHOW_DATE_TIME_DEFAULT);
         showThreadName = getBooleanProperty(BerserkrLogger.SHOW_THREAD_NAME_KEY, SHOW_THREAD_NAME_DEFAULT);
         showThreadId = getBooleanProperty(BerserkrLogger.SHOW_THREAD_ID_KEY, SHOW_THREAD_ID_DEFAULT);
-        dateTimeFormatStr = getStringProperty(BerserkrLogger.DATE_TIME_FORMAT_KEY, DATE_TIME_FORMAT_STR_DEFAULT);
+        String dateTimeFormatStr = getStringProperty(BerserkrLogger.DATE_TIME_FORMAT_KEY, DATE_TIME_FORMAT_STR_DEFAULT);
         levelInBrackets = getBooleanProperty(BerserkrLogger.LEVEL_IN_BRACKETS_KEY, LEVEL_IN_BRACKETS_DEFAULT);
         warnLevelString = getStringProperty(BerserkrLogger.WARN_LEVEL_STRING_KEY, WARN_LEVELS_STRING_DEFAULT);
+        passwordString = getStringProperty(BerserkrLogger.PASSWORD_KEY, PASSWORD_STRING_DEFAULT);
+        guidString = getStringProperty(BerserkrLogger.GUID_KEY, GUID_STRING_DEFAULT);
+        tagString = getStringProperty(BerserkrLogger.TAG_KEY, TAG_STRING_DEFAULT);
 
         logFile = getStringProperty(BerserkrLogger.LOG_FILE_KEY, logFile);
 

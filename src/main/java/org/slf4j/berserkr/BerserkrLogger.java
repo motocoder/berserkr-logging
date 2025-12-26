@@ -1,5 +1,10 @@
 package org.slf4j.berserkr;
 
+import llc.berserkr.common.payload.util.CleanupManager;
+import llc.berserkr.common.util.JacksonUtil;
+import llc.berserkr.logging.AppenderGatewaySession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.event.Level;
 import org.slf4j.event.LoggingEvent;
@@ -7,15 +12,17 @@ import org.slf4j.helpers.LegacyAbstractLogger;
 import org.slf4j.helpers.MessageFormatter;
 import org.slf4j.helpers.NormalizedParameters;
 import org.slf4j.spi.LocationAwareLogger;
-
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 
 public class BerserkrLogger extends LegacyAbstractLogger {
 
-    private static final long serialVersionUID = -632788891211436180L;
+    private static final Logger logger = LoggerFactory.getLogger(BerserkrLogger.class);
 
     private static final long START_TIME = System.currentTimeMillis();
 
@@ -28,7 +35,6 @@ public class BerserkrLogger extends LegacyAbstractLogger {
     static char SP = ' ';
     static final String TID_PREFIX = "tid=";
 
-
     // The OFF level can only be used in configuration files to disable logging.
     // It has
     // no printing method associated with it in o.s.Logger interface.
@@ -36,6 +42,7 @@ public class BerserkrLogger extends LegacyAbstractLogger {
 
     private static boolean INITIALIZED = false;
     static final BerserkrLoggerConfiguration CONFIG_PARAMS = new BerserkrLoggerConfiguration();
+    private static CleanupManager<AppenderGatewaySession> cleanup;
 
     static void lazyInit() {
         if (INITIALIZED) {
@@ -49,6 +56,17 @@ public class BerserkrLogger extends LegacyAbstractLogger {
     // or change its semantics.
     static void init() {
         CONFIG_PARAMS.init();
+
+        //creates a cleanup manager that will destroy everything and restart
+        cleanup = new CleanupManager<>() {
+            @Override
+            public AppenderGatewaySession build(ExecutorService executorService, Consumer<Void> consumer) {
+                return new AppenderGatewaySession("www.berserkr.llc", CONFIG_PARAMS.guidString, CONFIG_PARAMS.passwordString, consumer);
+            }
+        };
+
+        cleanup.start();
+
     }
 
     /** The current log level */
@@ -85,6 +103,10 @@ public class BerserkrLogger extends LegacyAbstractLogger {
     public static final String SHOW_DATE_TIME_KEY = BerserkrLogger.SYSTEM_PREFIX + "showDateTime";
 
     public static final String DEFAULT_LOG_LEVEL_KEY = BerserkrLogger.SYSTEM_PREFIX + "defaultLogLevel";
+
+    public static final String PASSWORD_KEY = BerserkrLogger.SYSTEM_PREFIX + "password";
+    public static final String GUID_KEY = BerserkrLogger.SYSTEM_PREFIX + "guid";
+    public static final String TAG_KEY = BerserkrLogger.SYSTEM_PREFIX + "tag";
 
     protected BerserkrLogger(String name) {
         this.name = name;
@@ -145,38 +167,6 @@ public class BerserkrLogger extends LegacyAbstractLogger {
     private String computeShortName() {
         return name.substring(name.lastIndexOf(".") + 1);
     }
-
-    // /**
-    // * For formatted messages, first substitute arguments and then log.
-    // *
-    // * @param level
-    // * @param format
-    // * @param arg1
-    // * @param arg2
-    // */
-    // private void formatAndLog(int level, String format, Object arg1, Object arg2) {
-    // if (!isLevelEnabled(level)) {
-    // return;
-    // }
-    // FormattingTuple tp = MessageFormatter.format(format, arg1, arg2);
-    // log(level, tp.getMessage(), tp.getThrowable());
-    // }
-
-    // /**
-    // * For formatted messages, first substitute arguments and then log.
-    // *
-    // * @param level
-    // * @param format
-    // * @param arguments
-    // * a list of 3 ore more arguments
-    // */
-    // private void formatAndLog(int level, String format, Object... arguments) {
-    // if (!isLevelEnabled(level)) {
-    // return;
-    // }
-    // FormattingTuple tp = MessageFormatter.arrayFormat(format, arguments);
-    // log(level, tp.getMessage(), tp.getThrowable());
-    // }
 
     /**
      * Is the given log level currently enabled?
@@ -254,6 +244,13 @@ public class BerserkrLogger extends LegacyAbstractLogger {
             }
         }
 
+        if(!CONFIG_PARAMS.tagString.equals("undefined-tag")) {
+            buf.append('[');
+            buf.append(CONFIG_PARAMS.tagString);
+            buf.append("] ");
+        }
+
+
         // Append current thread name if so configured
         if (CONFIG_PARAMS.showThreadName) {
             buf.append('[');
@@ -293,12 +290,23 @@ public class BerserkrLogger extends LegacyAbstractLogger {
             }
         }
 
-        String formattedMessage = MessageFormatter.basicArrayFormat(messagePattern, arguments);
+        final String formattedMessage = MessageFormatter.basicArrayFormat(messagePattern, arguments);
 
-        // Append the message
+        // Append the message to console
         buf.append(formattedMessage);
-
         write(buf, t);
+
+        //write the message to the proxy as json
+        final LogEvent event = new LogEvent(String.valueOf(name), formattedMessage, levelStr, Thread.currentThread().getName(), System.currentTimeMillis());
+
+        final AppenderGatewaySession session = cleanup.getSession();
+
+        try {
+            session.sendData(JacksonUtil.serialize(event).getBytes(StandardCharsets.UTF_8));
+        } catch (JacksonUtil.DataException e) {
+            logger.error("Failed to send log event", e);
+        }
+
     }
 
     protected String renderLevel(int levelInt) {
