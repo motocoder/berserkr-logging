@@ -1,4 +1,6 @@
-This is a custom slf4j mapping that will send logs from slf4j through a customer appender to be used with berserkr chainsaw (https://github.com/motocoder/chainsaw)
+This is a custom slf4j mapping that will send logs from slf4j through a custom appender to be used with berserkr chainsaw (https://github.com/motocoder/chainsaw)
+
+All log data is encrypted from the cient using this to the chainsaw receiver
 
 To use this project simply include the gradle dependency:
 ```
@@ -51,3 +53,5 @@ org.slf4j.berserkrLogger.tag=logcatTag
 org.slf4j.berserkrLogger.console=true
 
 ```
+
+credits to slf4j-simple for the basic skeleton of this project.
