@@ -13,10 +13,10 @@ import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.UUID;
 import java.util.function.Consumer;
-
-import static llc.ufwa.util.DataUtils.charToBytes;
 
 public class AppenderGatewaySession extends CleanupManager.CleanupSession {
 
@@ -96,7 +96,7 @@ public class AppenderGatewaySession extends CleanupManager.CleanupSession {
                 try {
 
                     logger.info("channel connecting");
-                    gatewayStarting.connect();
+                    gatewayStarting.connect("berserkrLoggingAPIKey");
                     logger.info("channel connected successful");
                     gatewayStarting.authenticate(gatewayStarting.getProxyGUID(), password, (authenticated) -> {
                         if(authenticated) {
@@ -108,7 +108,7 @@ public class AppenderGatewaySession extends CleanupManager.CleanupSession {
                         }
                     });
 
-                } catch (ProxyException | CommandException e) {
+                } catch (Throwable e) {
 
                     logger.error("channel connect failed", e);
                     throw new RuntimeException("channel connect failed", e);
@@ -134,7 +134,7 @@ public class AppenderGatewaySession extends CleanupManager.CleanupSession {
         }
     }
 
-    public void sendData(byte[] bytes) {
+    public void sendData(byte[] bytes) throws CommandException {
 
         final AuthenticatingPayloadGateway myGateway = this.gateway;
 
@@ -153,4 +153,17 @@ public class AppenderGatewaySession extends CleanupManager.CleanupSession {
         }
 
     }
+
+    public static byte[] charToBytes(char ch) {
+
+        // Extract the most significant byte (MSB)
+        byte msb = (byte) ((ch >> 8) & 0xFF);
+
+        // Extract the least significant byte (LSB)
+        byte lsb = (byte) (ch & 0xFF);
+
+        return new byte[] {msb, lsb};
+
+    }
+
 }

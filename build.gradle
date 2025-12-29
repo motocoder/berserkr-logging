@@ -1,3 +1,13 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        // Use the latest version available from Maven Central
+        classpath 'com.guardsquare:proguard-gradle:7.8.2'
+    }
+}
+
 plugins {
     id 'java'
     id 'java-library'

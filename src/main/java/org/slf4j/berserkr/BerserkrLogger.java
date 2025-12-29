@@ -1,5 +1,6 @@
 package org.slf4j.berserkr;
 
+import llc.berserkr.common.payload.exception.CommandException;
 import llc.berserkr.common.payload.util.CleanupManager;
 import llc.berserkr.common.util.JacksonUtil;
 import llc.berserkr.logging.AppenderGatewaySession;
@@ -303,8 +304,8 @@ public class BerserkrLogger extends LegacyAbstractLogger {
 
         try {
             session.sendData(JacksonUtil.serialize(event).getBytes(StandardCharsets.UTF_8));
-        } catch (JacksonUtil.DataException e) {
-            logger.error("Failed to send log event", e);
+        } catch (JacksonUtil.DataException | CommandException e) {
+            e.printStackTrace();
         }
 
     }
