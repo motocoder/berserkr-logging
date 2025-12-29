@@ -62,9 +62,11 @@ public class BerserkrLoggerConfiguration {
     String guidString = GUID_STRING_DEFAULT;
 
     private static final String TAG_STRING_DEFAULT = "undefined-tag";
+    private static final boolean CONSOLE_DEFAULT = false;
     String tagString = TAG_STRING_DEFAULT;
 
     private final Properties properties = new Properties();
+    public boolean showConsole;
 
     void init() {
         loadProperties();
@@ -84,6 +86,7 @@ public class BerserkrLoggerConfiguration {
         passwordString = getStringProperty(BerserkrLogger.PASSWORD_KEY, PASSWORD_STRING_DEFAULT);
         guidString = getStringProperty(BerserkrLogger.GUID_KEY, GUID_STRING_DEFAULT);
         tagString = getStringProperty(BerserkrLogger.TAG_KEY, TAG_STRING_DEFAULT);
+        showConsole = getBooleanProperty(BerserkrLogger.CONSOLE_KEY, CONSOLE_DEFAULT);
 
         logFile = getStringProperty(BerserkrLogger.LOG_FILE_KEY, logFile);
 

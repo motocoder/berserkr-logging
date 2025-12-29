@@ -108,6 +108,7 @@ public class BerserkrLogger extends LegacyAbstractLogger {
     public static final String PASSWORD_KEY = BerserkrLogger.SYSTEM_PREFIX + "password";
     public static final String GUID_KEY = BerserkrLogger.SYSTEM_PREFIX + "guid";
     public static final String TAG_KEY = BerserkrLogger.SYSTEM_PREFIX + "tag";
+    public static final String CONSOLE_KEY = BerserkrLogger.SYSTEM_PREFIX + "console";
 
     protected BerserkrLogger(String name) {
         this.name = name;
@@ -142,10 +143,14 @@ public class BerserkrLogger extends LegacyAbstractLogger {
     void write(StringBuilder buf, Throwable t) {
         PrintStream targetStream = CONFIG_PARAMS.outputChoice.getTargetPrintStream();
 
-        synchronized (CONFIG_PARAMS) {
-            targetStream.println(buf.toString());
-            writeThrowable(t, targetStream);
-            targetStream.flush();
+        if(CONFIG_PARAMS.showConsole) {
+
+            synchronized (CONFIG_PARAMS) {
+
+                targetStream.println(buf.toString());
+                writeThrowable(t, targetStream);
+                targetStream.flush();
+            }
         }
 
     }
