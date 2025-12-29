@@ -53,3 +53,5 @@ org.slf4j.berserkrLogger.tag=logcatTag
 org.slf4j.berserkrLogger.console=true
 
 ```
+
+credits to slf4j-simple for the basic skeleton of this project.
