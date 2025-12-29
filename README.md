@@ -1,12 +1,12 @@
 This is a custom slf4j mapping that will send logs from slf4j through a customer appender to be used with berserkr chainsaw (https://github.com/motocoder/chainsaw)
 
 To use this project simply include the gradle dependency:
-'''
+```
 implementation("llc.berserkr:logging:1.0.0")
-'''
+```
 
 Add file 'berserkrlogger.properties' to the resources directory and modify the tag, guid, and password:
-'''
+```
 # berserkrLogger configuration file
 # implementation of Logger that sends all enabled log messages, for all defined loggers, to System.err.
 
@@ -50,4 +50,4 @@ org.slf4j.berserkrLogger.guid=yourGuidGoesHere
 org.slf4j.berserkrLogger.tag=logcatTag
 org.slf4j.berserkrLogger.console=true
 
-'''
+```
