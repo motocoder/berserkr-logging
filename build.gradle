@@ -15,7 +15,7 @@ version = '1.0'
 
 repositories {
     mavenCentral()
-    mavenLocal()
+//    mavenLocal()
     maven { url 'https://jitpack.io' }
 }
 
