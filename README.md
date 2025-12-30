@@ -7,6 +7,17 @@ To use this project simply include the gradle dependency:
 implementation("llc.berserkr:logging:1.0.0")
 ```
 
+proguard stuff
+
+```
+-keep class org.slf4j.berserkr.** {
+     public protected private *;
+  }
+ -keep class llc.berserkr.logging.** {
+     public protected private *;
+  }
+```
+  
 Add file 'berserkrlogger.properties' to the resources directory and modify the tag, guid, and password:
 ```
 # berserkrLogger configuration file
