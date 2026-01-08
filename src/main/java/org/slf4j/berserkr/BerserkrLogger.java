@@ -308,7 +308,10 @@ public class BerserkrLogger extends LegacyAbstractLogger {
         final AppenderGatewaySession session = cleanup.getSession();
 
         try {
-            session.sendData(JacksonUtil.serialize(event).getBytes(StandardCharsets.UTF_8));
+
+            if(session != null) {
+                session.sendData(JacksonUtil.serialize(event).getBytes(StandardCharsets.UTF_8));
+            }
         } catch (JacksonUtil.DataException | CommandException e) {
             e.printStackTrace();
         }
