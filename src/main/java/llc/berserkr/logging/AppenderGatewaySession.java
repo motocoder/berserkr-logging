@@ -118,7 +118,7 @@ public class AppenderGatewaySession extends CleanupManager.CleanupSession {
             else {
                 throw new RuntimeException("failed to launch channel " + executed.errorBody());
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("failed request to launch channel " + e.getMessage(), e);
             throw new RuntimeException("failed request to launch channel " + e.getMessage());
         }

@@ -11,11 +11,11 @@ java {
 }
 
 group = 'llc.berserkr'
-version = '1.0.0'
+version = '1.0.1'
 
 repositories {
+    mavenLocal()
     mavenCentral()
-//    mavenLocal()
     maven { url 'https://jitpack.io' }
 }
 
@@ -28,7 +28,7 @@ dependencies {
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
 
 
-    implementation("llc.berserkr:common:1.0.0")
+    implementation("llc.berserkr:common:1.0.1")
 
     implementation("org.slf4j:slf4j-api:2.0.17")
 
@@ -38,102 +38,92 @@ test {
     useJUnitPlatform()
 }
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = 'llc.berserkr'
-            artifactId = 'logging'
-
-            from components.java
-
-            pom {
-                name = 'berserkr-logging'
-                description = 'berserkr logging library'
-                url = 'https://github.com/motocoder/berserkr-logging'
-                inceptionYear = '2025'
-                licenses {
-                    license {
-                        name = 'MIT'
-                        url = 'https://github.com/motocoder/berserkr-logging?tab=MIT-1-ov-file#readme'
-                    }
-                }
-                developers {
-                    developer {
-                        id = 'motocoder'
-                        name = 'Sean Wagner'
-                    }
-                }
-                scm {
-                    connection = 'scm:git:https://github.com/motocoder/berserkr-logging.git'
-                    developerConnection = 'scm:git:ssh://github.com//berserkr-logging.git'
-                    url = 'https://github.com/motocoder/berserkr-logging'
-                }
-            }
-        }
-    }
-
-    repositories {
-        maven {
-            url = layout.buildDirectory.dir('staging-deploy')
-        }
-    }
-}
-
-jreleaser {
-    signing {
-        active = 'ALWAYS'
-        armored = true
-    }
-    deploy {
-        maven {
-            mavenCentral {
-                sonatype {
-                    active = 'RELEASE'
-                    url = 'https://central.sonatype.com/api/v1/publisher'
-                    stagingRepository('build/staging-deploy')
-                }
-            }
-        }
-    }
-
-    environment {
-        // Location of a properties file with key/value pairs
-        // Each key must be prefixed with `JRELEASER_` and match
-        // the environment variable it overrides.
-        //
-        variables = '~/.jreleaser/config.toml'
-
-        // Additional properties used when evaluating templates.
-        //
-//        properties.put('foo', 'bar')
-    }
-
-}
-
-
 //publishing {
 //    publications {
-//        mavenJava(MavenPublication) {
-//            groupId = 'llc.berserkr' // Replace with your group ID
-//            artifactId = 'logging' // Replace with your artifact ID
-//            version = '1.0.0' // Replace with your version
+//        maven(MavenPublication) {
+//            groupId = 'llc.berserkr'
+//            artifactId = 'logging'
 //
 //            from components.java
-//        }
-//    }
-//    repositories {
-//        mavenLocal()
-//        maven {
-//            name = 'MavenCentral' // A descriptive name for your repository
-//            url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/") // The URL of your Maven repository
 //
-//            // Configure credentials for authentication
-//            credentials {
-//                username = System.getenv("MAVEN_REPO_USER") // Best practice: use environment variables
-//                password = System.getenv("MAVEN_REPO_PASS")
+//            pom {
+//                name = 'berserkr-logging'
+//                description = 'berserkr logging library'
+//                url = 'https://github.com/motocoder/berserkr-logging'
+//                inceptionYear = '2025'
+//                licenses {
+//                    license {
+//                        name = 'MIT'
+//                        url = 'https://github.com/motocoder/berserkr-logging?tab=MIT-1-ov-file#readme'
+//                    }
+//                }
+//                developers {
+//                    developer {
+//                        id = 'motocoder'
+//                        name = 'Sean Wagner'
+//                    }
+//                }
+//                scm {
+//                    connection = 'scm:git:https://github.com/motocoder/berserkr-logging.git'
+//                    developerConnection = 'scm:git:ssh://github.com//berserkr-logging.git'
+//                    url = 'https://github.com/motocoder/berserkr-logging'
+//                }
 //            }
 //        }
+//    }
 //
+//    repositories {
+//        maven {
+//            url = layout.buildDirectory.dir('staging-deploy')
+//        }
+//    }
+//}
+//
+//jreleaser {
+//    signing {
+//        active = 'ALWAYS'
+//        armored = true
+//    }
+//    deploy {
+//        maven {
+//            mavenCentral {
+//                sonatype {
+//                    active = 'RELEASE'
+//                    url = 'https://central.sonatype.com/api/v1/publisher'
+//                    stagingRepository('build/staging-deploy')
+//                }
+//            }
+//        }
+//    }
+//
+//    environment {
+//        // Location of a properties file with key/value pairs
+//        // Each key must be prefixed with `JRELEASER_` and match
+//        // the environment variable it overrides.
+//        //
+//        variables = '~/.jreleaser/config.toml'
+//
+//        // Additional properties used when evaluating templates.
+//        //
+////        properties.put('foo', 'bar')
 //    }
 //
 //}
+
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = 'llc.berserkr' // Replace with your group ID
+            artifactId = 'logging' // Replace with your artifact ID
+            version = '1.0.1' // Replace with your version
+
+            from components.java
+        }
+    }
+    repositories {
+        mavenLocal()
+
+    }
+
+}
