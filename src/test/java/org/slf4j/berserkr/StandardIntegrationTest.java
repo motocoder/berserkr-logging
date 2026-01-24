@@ -25,5 +25,9 @@ public class StandardIntegrationTest {
         logger.error("test", new Exception("test"));
         logger.warn("test", new Exception("test"));
 
+        Thread.sleep(2000);
+
+        System.out.println("FINISHED");
+
     }
 }

@@ -149,7 +149,7 @@ public class AppenderGatewaySession extends CleanupManager.CleanupSession {
             payloadData[0] = typeBytes[0];
             payloadData[1] = typeBytes[1];
 
-            myGateway.sendCommand(myGateway.getProxyGUID(), payloadData);
+            myGateway.sendAuthenticatedCommand(myGateway.getProxyGUID(), payloadData);
         }
 
     }
