@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 public class BerserkrLogger extends LegacyAbstractLogger {
@@ -45,6 +46,8 @@ public class BerserkrLogger extends LegacyAbstractLogger {
     static final BerserkrLoggerConfiguration CONFIG_PARAMS = new BerserkrLoggerConfiguration();
     private static CleanupManager<AppenderGatewaySession> cleanup;
 
+    private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
+
     static void lazyInit() {
         if (INITIALIZED) {
             return;
@@ -66,7 +69,13 @@ public class BerserkrLogger extends LegacyAbstractLogger {
             }
         };
 
-        cleanup.start();
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                cleanup.start();
+            }
+        });
+
 
     }
 
@@ -300,21 +309,37 @@ public class BerserkrLogger extends LegacyAbstractLogger {
 
         // Append the message to console
         buf.append(formattedMessage);
+
+        if(t != null) {
+
+            buf.append('\n');
+
+            for (final StackTraceElement elem : t.getStackTrace()) {
+                buf.append(elem).append("\n");
+            }
+        }
+
         write(buf, t);
 
         //write the message to the proxy as json
         final LogEvent event = new LogEvent(String.valueOf(name), formattedMessage, levelStr, Thread.currentThread().getName(), System.currentTimeMillis());
 
-        final AppenderGatewaySession session = cleanup.getSession();
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                final AppenderGatewaySession session = cleanup.getSession();
 
-        try {
+                try {
 
-            if(session != null) {
-                session.sendData(JacksonUtil.serialize(event).getBytes(StandardCharsets.UTF_8));
+                    if(session != null) {
+                        session.sendData(JacksonUtil.serialize(event).getBytes(StandardCharsets.UTF_8));
+                    }
+                } catch (JacksonUtil.DataException | CommandException e) {
+                    e.printStackTrace();
+                }
             }
-        } catch (JacksonUtil.DataException | CommandException e) {
-            e.printStackTrace();
-        }
+        });
+
 
     }
 
