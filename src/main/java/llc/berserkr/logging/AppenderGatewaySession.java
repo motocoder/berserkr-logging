@@ -4,24 +4,19 @@ import llc.berserkr.common.payload.auth.BaseAuthenticationProvider;
 import llc.berserkr.common.payload.client.AuthenticatingPayloadGateway;
 import llc.berserkr.common.payload.connection.SocketClientConnection;
 import llc.berserkr.common.payload.exception.CommandException;
-import llc.berserkr.common.payload.exception.ProxyException;
 import llc.berserkr.common.payload.util.CleanupManager;
 import okhttp3.OkHttpClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
+import java.io.PrintStream;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 public class AppenderGatewaySession extends CleanupManager.CleanupSession {
 
-    //this feels wrong in a log4j project
-    private static final Logger logger = LoggerFactory.getLogger(AppenderGatewaySession.class);
+    private static final String LOG_PREFIX = "[berserkr] ";
+    private static final PrintStream log = System.err;
 
     private static final char BROADCAST = 'B';
 
@@ -30,7 +25,7 @@ public class AppenderGatewaySession extends CleanupManager.CleanupSession {
     private final Consumer<Void> flagback;
     private final String guid;
     private final LaunchAPI launchService;
-    private AuthenticatingPayloadGateway gateway;
+    private volatile AuthenticatingPayloadGateway gateway;
 
     public AppenderGatewaySession(
         final String host,
@@ -44,9 +39,12 @@ public class AppenderGatewaySession extends CleanupManager.CleanupSession {
         this.password = password;
         this.flagback = flagback;
 
-        final OkHttpClient client = new OkHttpClient.Builder()
-            .hostnameVerifier((hostname, session) -> true)
-            .build();
+        final OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
+        if ("true".equalsIgnoreCase(System.getProperty("org.slf4j.berserkrLogger.insecureTls"))) {
+            log.println(LOG_PREFIX + "WARNING: TLS hostname verification is disabled - vulnerable to MITM attacks");
+            clientBuilder.hostnameVerifier((hostname, session) -> true);
+        }
+        final OkHttpClient client = clientBuilder.build();
 
         final Retrofit retrofit = new Retrofit.Builder()
             .baseUrl("https://" + host + "/chainsawchoker/")
@@ -61,7 +59,7 @@ public class AppenderGatewaySession extends CleanupManager.CleanupSession {
     @Override
     public void start() {
 
-        logger.info("starting appender gateway session");
+        log.println(LOG_PREFIX + "starting appender gateway session");
 
         final Call<ChannelResponse> channelResponse = launchService.launchChannel(guid, password);
 
@@ -69,7 +67,7 @@ public class AppenderGatewaySession extends CleanupManager.CleanupSession {
 
             final retrofit2.Response<ChannelResponse> executed = channelResponse.execute();
 
-            logger.info("channel executed " + executed.isSuccessful() + " " + executed.body());
+            log.println(LOG_PREFIX + "channel executed " + executed.isSuccessful() + " " + executed.body());
 
             if (executed.isSuccessful() && executed.body() != null) {
 
@@ -88,19 +86,19 @@ public class AppenderGatewaySession extends CleanupManager.CleanupSession {
                 gatewayStarting.addConnectionConsumer(connected -> {
                     if (!connected) {
 
-                        logger.info("channel disconnected");
+                        log.println(LOG_PREFIX + "channel disconnected");
                         flagback.accept(null);
                     }
                 });
 
                 try {
 
-                    logger.info("channel connecting");
+                    log.println(LOG_PREFIX + "channel connecting");
                     gatewayStarting.connect("berserkrLoggingAPIKey");
-                    logger.info("channel connected successful");
+                    log.println(LOG_PREFIX + "channel connected successful");
                     gatewayStarting.authenticate(gatewayStarting.getProxyGUID(), password, (authenticated) -> {
                         if(authenticated) {
-                            logger.info("channel authenticated successful");
+                            log.println(LOG_PREFIX + "channel authenticated successful");
                             this.gateway = gatewayStarting;
                         }
                         else {
@@ -110,7 +108,8 @@ public class AppenderGatewaySession extends CleanupManager.CleanupSession {
 
                 } catch (Throwable e) {
 
-                    logger.error("channel connect failed", e);
+                    log.println(LOG_PREFIX + "channel connect failed");
+                    e.printStackTrace(log);
                     throw new RuntimeException("channel connect failed", e);
                 }
 
@@ -119,8 +118,9 @@ public class AppenderGatewaySession extends CleanupManager.CleanupSession {
                 throw new RuntimeException("failed to launch channel " + executed.errorBody());
             }
         } catch (Exception e) {
-            logger.error("failed request to launch channel " + e.getMessage(), e);
-            throw new RuntimeException("failed request to launch channel " + e.getMessage());
+            System.err.println("[berserkr] failed request to launch channel: " + e.getMessage());
+            e.printStackTrace(System.err);
+            throw new RuntimeException("failed request to launch channel", e);
         }
 
     }

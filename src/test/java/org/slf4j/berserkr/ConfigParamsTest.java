@@ -31,6 +31,8 @@ public class ConfigParamsTest {
     public Logger createLogger(ListAppendingOutputStream outputStream, Level level, String warnLevelString) {
 
         BerserkrLogger.CONFIG_PARAMS.warnLevelString = warnLevelString;
+        BerserkrLogger.CONFIG_PARAMS.showConsole = true;
+        BerserkrLogger.CONFIG_PARAMS.outputChoice = new OutputChoice(new java.io.PrintStream(outputStream, false));
 
         BerserkrLogger logger = new BerserkrLogger(ConfigParamsTest.class.getName());
         logger.currentLogLevel = BerserkrLoggerConfiguration.stringToLevel(level.toString());

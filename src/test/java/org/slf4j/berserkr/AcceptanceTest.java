@@ -10,6 +10,10 @@ public class AcceptanceTest extends LoggerTestSuite {
     @Override
     public Logger createLogger(ListAppendingOutputStream outputStream, Level level) {
 
+        BerserkrLogger.CONFIG_PARAMS.init();
+        BerserkrLogger.CONFIG_PARAMS.showConsole = true;
+        BerserkrLogger.CONFIG_PARAMS.outputChoice = new OutputChoice(new PrintStream(outputStream, false));
+
         BerserkrLogger logger = new BerserkrLogger("TestSuiteLogger");
         logger.currentLogLevel = BerserkrLoggerConfiguration.stringToLevel(level.toString());
         return logger;

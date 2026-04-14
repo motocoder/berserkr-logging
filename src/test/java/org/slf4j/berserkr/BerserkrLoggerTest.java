@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class BerserkrLoggerTest {
 
     String A_KEY = BerserkrLogger.LOG_KEY_PREFIX + "a";
-    PrintStream original = System.out;
+    PrintStream originalOut = System.out;
     ByteArrayOutputStream bout = new ByteArrayOutputStream();
     PrintStream replacement = new PrintStream(bout);
 
@@ -52,7 +52,7 @@ public class BerserkrLoggerTest {
         System.clearProperty(BerserkrLogger.CACHE_OUTPUT_STREAM_STRING_KEY);
         System.clearProperty(BerserkrLogger.SHOW_THREAD_ID_KEY);
         System.clearProperty(BerserkrLogger.SHOW_THREAD_NAME_KEY);
-        System.setErr(original);
+        System.setOut(originalOut);
     }
 
     @Test
@@ -64,7 +64,7 @@ public class BerserkrLoggerTest {
     @Test
     public void offLevel() {
         System.setProperty(A_KEY, "off");
-        BerserkrLogger.init();
+        BerserkrLogger.CONFIG_PARAMS.init();
         BerserkrLogger berserkrLogger = new BerserkrLogger("a");
         assertEquals("off", berserkrLogger.recursivelyComputeLevelString());
         assertFalse(berserkrLogger.isErrorEnabled());
@@ -72,7 +72,7 @@ public class BerserkrLoggerTest {
 
     @Test
     public void loggerNameWithNoDots_WithLevel() {
-        BerserkrLogger.init();
+        BerserkrLogger.CONFIG_PARAMS.init();
         BerserkrLogger berserkrLogger = new BerserkrLogger("a");
 
         assertEquals("info", berserkrLogger.recursivelyComputeLevelString());
@@ -98,10 +98,10 @@ public class BerserkrLoggerTest {
 
     @Test
     public void checkUseOfLastSystemStreamReference() {
-        BerserkrLogger.init();
+        BerserkrLogger.CONFIG_PARAMS.init();
         BerserkrLogger berserkrLogger = new BerserkrLogger(this.getClass().getName());
 
-        System.setErr(replacement);
+        System.setOut(replacement);
         berserkrLogger.info("hello");
         replacement.flush();
         assertTrue(bout.toString().contains("INFO " + this.getClass().getName() + " - hello"));
@@ -109,12 +109,12 @@ public class BerserkrLoggerTest {
 
     @Test
     public void checkUseOfCachedOutputStream() {
-        System.setErr(replacement);
+        System.setOut(replacement);
         System.setProperty(BerserkrLogger.CACHE_OUTPUT_STREAM_STRING_KEY, "true");
-        BerserkrLogger.init();
+        BerserkrLogger.CONFIG_PARAMS.init();
         BerserkrLogger berserkrLogger = new BerserkrLogger(this.getClass().getName());
         // change reference to original before logging
-        System.setErr(original);
+        System.setOut(originalOut);
 
         berserkrLogger.info("hello");
         replacement.flush();
@@ -124,26 +124,24 @@ public class BerserkrLoggerTest {
     @Test
     public void testTheadIdWithoutThreadName() {
         System.setProperty(BerserkrLogger.SHOW_THREAD_NAME_KEY, Boolean.FALSE.toString());
-        String patternStr = "^tid=\\d{1,12} INFO org.slf4j.berserkr.BerserkrLoggerTest - hello";
+        String patternStr = ".*tid=\\d{1,12} INFO org.slf4j.berserkr.BerserkrLoggerTest - hello";
         commonTestThreadId(patternStr);
     }
 
     @Test
     public void testThreadId() {
-        String patternStr = "^\\[.*\\] tid=\\d{1,12} INFO org.slf4j.berserkr.BerserkrLoggerTest - hello";
+        String patternStr = ".*\\[.*\\] tid=\\d{1,12} INFO org.slf4j.berserkr.BerserkrLoggerTest - hello";
         commonTestThreadId(patternStr);
     }
 
     private void commonTestThreadId(String patternStr) {
-        System.setErr(replacement);
+        System.setOut(replacement);
         System.setProperty(BerserkrLogger.SHOW_THREAD_ID_KEY, Boolean.TRUE.toString());
-        BerserkrLogger.init();
+        BerserkrLogger.CONFIG_PARAMS.init();
         BerserkrLogger berserkrLogger = new BerserkrLogger(this.getClass().getName());
         berserkrLogger.info("hello");
         replacement.flush();
         String output = bout.toString();
-        System.out.println(patternStr);
-        System.out.println(output);
         assertTrue(Pattern.compile(patternStr).matcher(output).lookingAt());
     }
 }

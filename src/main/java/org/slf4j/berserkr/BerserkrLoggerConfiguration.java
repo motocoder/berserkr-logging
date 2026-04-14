@@ -6,10 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
 public class BerserkrLoggerConfiguration {
@@ -24,7 +21,7 @@ public class BerserkrLoggerConfiguration {
 
     private static final String DATE_TIME_FORMAT_STR_DEFAULT = null;
 
-    DateFormat dateFormatter = null;
+    DateTimeFormatter dateFormatter = null;
 
     private static final boolean SHOW_THREAD_NAME_DEFAULT = true;
     boolean showThreadName = SHOW_THREAD_NAME_DEFAULT;
@@ -61,6 +58,9 @@ public class BerserkrLoggerConfiguration {
     private static final String GUID_STRING_DEFAULT = "berserkr";
     String guidString = GUID_STRING_DEFAULT;
 
+    private static final String HOST_STRING_DEFAULT = "www.berserkr.llc";
+    String hostString = HOST_STRING_DEFAULT;
+
     private static final String TAG_STRING_DEFAULT = "undefined-tag";
     private static final boolean CONSOLE_DEFAULT = false;
     String tagString = TAG_STRING_DEFAULT;
@@ -85,6 +85,7 @@ public class BerserkrLoggerConfiguration {
         warnLevelString = getStringProperty(BerserkrLogger.WARN_LEVEL_STRING_KEY, WARN_LEVELS_STRING_DEFAULT);
         passwordString = getStringProperty(BerserkrLogger.PASSWORD_KEY, PASSWORD_STRING_DEFAULT);
         guidString = getStringProperty(BerserkrLogger.GUID_KEY, GUID_STRING_DEFAULT);
+        hostString = getStringProperty(BerserkrLogger.HOST_KEY, HOST_STRING_DEFAULT);
         tagString = getStringProperty(BerserkrLogger.TAG_KEY, TAG_STRING_DEFAULT);
         showConsole = getBooleanProperty(BerserkrLogger.CONSOLE_KEY, CONSOLE_DEFAULT);
 
@@ -95,7 +96,7 @@ public class BerserkrLoggerConfiguration {
 
         if (dateTimeFormatStr != null) {
             try {
-                dateFormatter = new SimpleDateFormat(dateTimeFormatStr);
+                dateFormatter = DateTimeFormatter.ofPattern(dateTimeFormatStr);
             } catch (IllegalArgumentException e) {
                 Reporter.error("Bad date format in " + CONFIGURATION_FILE + "; will output relative time", e);
             }
@@ -104,14 +105,13 @@ public class BerserkrLoggerConfiguration {
 
     private void loadProperties() {
         // Add props from the resource berserkrlogger.properties
-        InputStream in = AccessController.doPrivileged((PrivilegedAction<InputStream>) () -> {
-            ClassLoader threadCL = Thread.currentThread().getContextClassLoader();
-            if (threadCL != null) {
-                return threadCL.getResourceAsStream(CONFIGURATION_FILE);
-            } else {
-                return ClassLoader.getSystemResourceAsStream(CONFIGURATION_FILE);
-            }
-        });
+        ClassLoader threadCL = Thread.currentThread().getContextClassLoader();
+        InputStream in;
+        if (threadCL != null) {
+            in = threadCL.getResourceAsStream(CONFIGURATION_FILE);
+        } else {
+            in = ClassLoader.getSystemResourceAsStream(CONFIGURATION_FILE);
+        }
         if (null != in) {
             try {
                 properties.load(in);

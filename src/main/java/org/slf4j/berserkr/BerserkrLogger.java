@@ -1,11 +1,9 @@
 package org.slf4j.berserkr;
 
+import com.google.gson.Gson;
 import llc.berserkr.common.payload.exception.CommandException;
 import llc.berserkr.common.payload.util.CleanupManager;
-import llc.berserkr.common.util.JacksonUtil;
 import llc.berserkr.logging.AppenderGatewaySession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.event.Level;
 import org.slf4j.event.LoggingEvent;
@@ -16,16 +14,17 @@ import org.slf4j.spi.LocationAwareLogger;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class BerserkrLogger extends LegacyAbstractLogger {
 
-    private static final Logger logger = LoggerFactory.getLogger(BerserkrLogger.class);
-
+    private static final Gson GSON = new Gson();
     private static final long START_TIME = System.currentTimeMillis();
 
     protected static final int LOG_LEVEL_TRACE = LocationAwareLogger.TRACE_INT;
@@ -42,18 +41,30 @@ public class BerserkrLogger extends LegacyAbstractLogger {
     // no printing method associated with it in o.s.Logger interface.
     protected static final int LOG_LEVEL_OFF = LOG_LEVEL_ERROR + 10;
 
-    private static boolean INITIALIZED = false;
+    private static volatile boolean INITIALIZED = false;
     static final BerserkrLoggerConfiguration CONFIG_PARAMS = new BerserkrLoggerConfiguration();
     private static CleanupManager<AppenderGatewaySession> cleanup;
 
-    private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    private static final int MAX_QUEUED_EVENTS = 10_000;
+    private static final ExecutorService executorService = new ThreadPoolExecutor(
+            1, 1, 0L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(MAX_QUEUED_EVENTS),
+            new ThreadPoolExecutor.DiscardOldestPolicy()
+    );
+    private static final ConcurrentLinkedQueue<byte[]> startupBuffer = new ConcurrentLinkedQueue<>();
+    private static volatile boolean connectionReady = false;
 
     static void lazyInit() {
         if (INITIALIZED) {
             return;
         }
-        INITIALIZED = true;
-        init();
+        synchronized (BerserkrLogger.class) {
+            if (INITIALIZED) {
+                return;
+            }
+            INITIALIZED = true;
+            init();
+        }
     }
 
     // external software might be invoking this method directly. Do not rename
@@ -63,9 +74,31 @@ public class BerserkrLogger extends LegacyAbstractLogger {
 
         //creates a cleanup manager that will destroy everything and restart
         cleanup = new CleanupManager<>() {
+            private int reconnectAttempts = 0;
+
             @Override
             public AppenderGatewaySession build(ExecutorService executorService, Consumer<Void> consumer) {
-                return new AppenderGatewaySession("www.berserkr.llc", CONFIG_PARAMS.guidString, CONFIG_PARAMS.passwordString, consumer);
+                if (reconnectAttempts > 0) {
+                    long delayMs = Math.min(1000L * (1L << Math.min(reconnectAttempts - 1, 6)), 60_000L);
+                    System.err.println("[berserkr] reconnecting in " + delayMs + "ms (attempt " + reconnectAttempts + ")");
+                    try {
+                        Thread.sleep(delayMs);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        return null;
+                    }
+                }
+                reconnectAttempts++;
+                try {
+                    AppenderGatewaySession session = new AppenderGatewaySession(
+                            CONFIG_PARAMS.hostString, CONFIG_PARAMS.guidString, CONFIG_PARAMS.passwordString, consumer);
+                    reconnectAttempts = 0;
+                    connectionReady = false;
+                    return session;
+                } catch (Exception e) {
+                    System.err.println("[berserkr] failed to create session: " + e.getMessage());
+                    return null;
+                }
             }
         };
 
@@ -76,7 +109,27 @@ public class BerserkrLogger extends LegacyAbstractLogger {
             }
         });
 
-
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            executorService.shutdown();
+            try {
+                if (!executorService.awaitTermination(5, TimeUnit.SECONDS)) {
+                    executorService.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executorService.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+            if (cleanup != null) {
+                AppenderGatewaySession session = cleanup.getSession();
+                if (session != null) {
+                    session.destroy();
+                }
+            }
+            if (CONFIG_PARAMS.outputChoice != null
+                    && CONFIG_PARAMS.outputChoice.outputChoiceType == OutputChoice.OutputChoiceType.FILE) {
+                CONFIG_PARAMS.outputChoice.getTargetPrintStream().close();
+            }
+        }, "berserkr-shutdown"));
     }
 
     /** The current log level */
@@ -116,6 +169,7 @@ public class BerserkrLogger extends LegacyAbstractLogger {
 
     public static final String PASSWORD_KEY = BerserkrLogger.SYSTEM_PREFIX + "password";
     public static final String GUID_KEY = BerserkrLogger.SYSTEM_PREFIX + "guid";
+    public static final String HOST_KEY = BerserkrLogger.SYSTEM_PREFIX + "host";
     public static final String TAG_KEY = BerserkrLogger.SYSTEM_PREFIX + "tag";
     public static final String CONSOLE_KEY = BerserkrLogger.SYSTEM_PREFIX + "console";
 
@@ -150,18 +204,14 @@ public class BerserkrLogger extends LegacyAbstractLogger {
      * @param t
      */
     void write(StringBuilder buf, Throwable t) {
-        PrintStream targetStream = CONFIG_PARAMS.outputChoice.getTargetPrintStream();
-
         if(CONFIG_PARAMS.showConsole) {
-
-            synchronized (CONFIG_PARAMS) {
-
+            PrintStream targetStream = CONFIG_PARAMS.outputChoice.getTargetPrintStream();
+            synchronized (targetStream) {
                 targetStream.println(buf.toString());
                 writeThrowable(t, targetStream);
                 targetStream.flush();
             }
         }
-
     }
 
     protected void writeThrowable(Throwable t, PrintStream targetStream) {
@@ -171,12 +221,7 @@ public class BerserkrLogger extends LegacyAbstractLogger {
     }
 
     private String getFormattedDate() {
-        Date now = new Date();
-        String dateText;
-        synchronized (CONFIG_PARAMS.dateFormatter) {
-            dateText = CONFIG_PARAMS.dateFormatter.format(now);
-        }
-        return dateText;
+        return CONFIG_PARAMS.dateFormatter.format(java.time.ZonedDateTime.now());
     }
 
     private String computeShortName() {
@@ -246,7 +291,7 @@ public class BerserkrLogger extends LegacyAbstractLogger {
 
     private void innerHandleNormalizedLoggingCall(Level level, List<Marker> markers, String messagePattern, Object[] arguments, Throwable t) {
 
-        StringBuilder buf = new StringBuilder(32);
+        StringBuilder buf = new StringBuilder(256);
 
         // Append date-time if so configured
         if (CONFIG_PARAMS.showDateTime) {
@@ -311,11 +356,17 @@ public class BerserkrLogger extends LegacyAbstractLogger {
         buf.append(formattedMessage);
 
         if(t != null) {
-
             buf.append('\n');
-
-            for (final StackTraceElement elem : t.getStackTrace()) {
-                buf.append(elem).append("\n");
+            Throwable current = t;
+            while (current != null) {
+                if (current != t) {
+                    buf.append("Caused by: ");
+                }
+                buf.append(current).append('\n');
+                for (final StackTraceElement elem : current.getStackTrace()) {
+                    buf.append("\tat ").append(elem).append('\n');
+                }
+                current = current.getCause();
             }
         }
 
@@ -327,15 +378,25 @@ public class BerserkrLogger extends LegacyAbstractLogger {
         executorService.execute(new Runnable() {
             @Override
             public void run() {
-                final AppenderGatewaySession session = cleanup.getSession();
-
                 try {
+                    final byte[] data = GSON.toJson(event).getBytes(StandardCharsets.UTF_8);
+                    final AppenderGatewaySession session = cleanup.getSession();
 
-                    if(session != null) {
-                        session.sendData(JacksonUtil.serialize(event).getBytes(StandardCharsets.UTF_8));
+                    if (session != null) {
+                        // Flush any buffered startup events first
+                        if (!connectionReady) {
+                            connectionReady = true;
+                            byte[] buffered;
+                            while ((buffered = startupBuffer.poll()) != null) {
+                                session.sendData(buffered);
+                            }
+                        }
+                        session.sendData(data);
+                    } else {
+                        startupBuffer.offer(data);
                     }
-                } catch (JacksonUtil.DataException | CommandException e) {
-                    e.printStackTrace();
+                } catch (CommandException e) {
+                    System.err.println("[berserkr] failed to send log event: " + e.getMessage());
                 }
             }
         });
