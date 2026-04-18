@@ -144,7 +144,19 @@ public class StringFormattedMessage {
 
     @Override
     public String toString() {
-        return getFormattedMessage();
+
+        final StringBuilder returnVal = new StringBuilder();
+
+        returnVal.append(getFormattedMessage());
+
+        if(throwable != null) {
+            for(final StackTraceElement elem : throwable.getStackTrace()) {
+                returnVal.append(elem.toString());
+            }
+        }
+
+        return returnVal.toString();
+
     }
 
     private void writeObject(final ObjectOutputStream out) throws IOException {

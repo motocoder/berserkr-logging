@@ -74,6 +74,11 @@ public class BerserkrLogger extends LegacyAbstractLogger {
 
         //creates a cleanup manager that will destroy everything and restart
         cleanup = new CleanupManager<>() {
+
+            @Override
+            public String getName() {
+                return "logger service cleanup ";
+            }
             private int reconnectAttempts = 0;
 
             @Override
