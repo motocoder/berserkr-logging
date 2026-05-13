@@ -202,6 +202,59 @@ public class BerserkrLogger extends LegacyAbstractLogger {
     }
 
     /**
+     * Runtime toggle for console (logcat / stderr / stdout) output. Affects
+     * the current process only; the in-memory LogCache and remote appender
+     * paths are unaffected. Initial value is loaded from properties or system
+     * property {@code org.slf4j.berserkrLogger.console} at init time.
+     */
+    public static void setShowConsole(boolean on) {
+        lazyInit();
+        CONFIG_PARAMS.showConsole = on;
+    }
+
+    /** Current console-output state. */
+    public static boolean isShowConsole() {
+        lazyInit();
+        return CONFIG_PARAMS.showConsole;
+    }
+
+    /** Sentinel: no runtime override, fall through to per-logger {@code currentLogLevel}. */
+    private static final int RUNTIME_LEVEL_UNSET = -1;
+
+    /** Process-wide log-level override. {@code -1} means unset. */
+    private static volatile int runtimeLogLevel = RUNTIME_LEVEL_UNSET;
+
+    /**
+     * Override the log level for every logger in this process. Accepts
+     * TRACE|DEBUG|INFO|WARN|ERROR|OFF (case-insensitive). Wins over each
+     * logger's per-instance {@code currentLogLevel}.
+     */
+    public static void setLogLevel(String levelStr) {
+        lazyInit();
+        runtimeLogLevel = BerserkrLoggerConfiguration.stringToLevel(levelStr);
+    }
+
+    /**
+     * Effective log level as a level name. Returns the runtime override if
+     * set, otherwise the per-process default loaded from properties.
+     */
+    public static String getLogLevel() {
+        lazyInit();
+        final int rt = runtimeLogLevel;
+        final int level = (rt == RUNTIME_LEVEL_UNSET) ? CONFIG_PARAMS.defaultLogLevel : rt;
+        if (level == LOG_LEVEL_TRACE) return "TRACE";
+        if (level == LOG_LEVEL_DEBUG) return "DEBUG";
+        if (level == LOG_LEVEL_INFO)  return "INFO";
+        if (level == LOG_LEVEL_WARN)  return "WARN";
+        if (level == LOG_LEVEL_ERROR) return "ERROR";
+        if (level == LOG_LEVEL_OFF)   return "OFF";
+        return "INFO";
+    }
+
+    /** Test-only: revert to per-logger / process-default behavior. */
+    static void clearRuntimeLogLevel() { runtimeLogLevel = RUNTIME_LEVEL_UNSET; }
+
+    /**
      * To avoid intermingling of log messages and associated stack traces, the two
      * operations are done in a synchronized block.
      *
@@ -242,7 +295,9 @@ public class BerserkrLogger extends LegacyAbstractLogger {
     protected boolean isLevelEnabled(int logLevel) {
         // log level are numerically ordered so can use berserkr numeric
         // comparison
-        return (logLevel >= currentLogLevel);
+        final int rt = runtimeLogLevel;
+        final int threshold = (rt == RUNTIME_LEVEL_UNSET) ? currentLogLevel : rt;
+        return (logLevel >= threshold);
     }
 
     /** Are {@code trace} messages currently enabled? */
@@ -378,7 +433,13 @@ public class BerserkrLogger extends LegacyAbstractLogger {
         write(buf, t);
 
         //write the message to the proxy as json
-        final LogEvent event = new LogEvent(String.valueOf(name), formattedMessage, levelStr, Thread.currentThread().getName(), System.currentTimeMillis());
+        final int levelInt = level.toInt();
+        final LogEvent event = new LogEvent(
+                String.valueOf(name), formattedMessage, levelStr, levelInt,
+                Thread.currentThread().getName(), System.currentTimeMillis(),
+                LogEvent.formatThrowable(t));
+
+        LogCache.offer(event, levelInt);
 
         executorService.execute(new Runnable() {
             @Override

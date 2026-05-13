@@ -11,7 +11,7 @@ java {
 }
 
 group = 'llc.berserkr'
-version = '1.0.2'
+version = '1.0.3'
 
 repositories {
     mavenLocal()
@@ -116,7 +116,7 @@ publishing {
         mavenJava(MavenPublication) {
             groupId = 'llc.berserkr' // Replace with your group ID
             artifactId = 'logging' // Replace with your artifact ID
-            version = '1.0.2' // Replace with your version
+            version = '1.0.3' // Replace with your version
 
             from components.java
         }

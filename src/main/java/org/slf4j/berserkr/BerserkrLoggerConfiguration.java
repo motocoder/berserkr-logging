@@ -66,7 +66,7 @@ public class BerserkrLoggerConfiguration {
     String tagString = TAG_STRING_DEFAULT;
 
     private final Properties properties = new Properties();
-    public boolean showConsole;
+    public volatile boolean showConsole;
 
     void init() {
         loadProperties();
